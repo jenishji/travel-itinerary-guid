@@ -37,6 +37,13 @@ const DestinationsByTheme = ({ onPlanTrip }) => {
     }
   }, [destinations]);
   
+  // Effect to fetch destinations when theme or country changes
+  useEffect(() => {
+    if (selectedTheme) {
+      fetchDestinations(selectedTheme.id, selectedCountry);
+    }
+  }, [selectedTheme, selectedCountry]);
+  
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
@@ -51,22 +58,21 @@ const DestinationsByTheme = ({ onPlanTrip }) => {
   
   const handleCountrySelect = (country) => {
     setSelectedCountry(country);
-    
-    // If a theme is already selected, reload destinations with the new country
-    if (selectedTheme) {
-      handleThemeSelect(selectedTheme, country);
-    }
+    // The effect will handle fetching destinations if needed
   };
   
-  const handleThemeSelect = async (theme, country = selectedCountry) => {
+  const handleThemeSelect = (theme) => {
     setSelectedTheme(theme);
+    // The effect will handle fetching destinations
+  };
+  
+  const fetchDestinations = async (themeId, country) => {
     setIsLoading(true);
     setError(null);
     setExpandedDestination(null);
     
     try {
-      // This is correct - country is being sent as a parameter
-      const response = await axios.get(`http://localhost:4000/api/v1/destinations/theme/${theme.id}`, {
+      const response = await axios.get(`http://localhost:4000/api/v1/destinations/theme/${themeId}`, {
         params: { country }
       });
       
@@ -167,7 +173,7 @@ const DestinationsByTheme = ({ onPlanTrip }) => {
             <div className="text-red-500 text-center p-6 bg-red-50 rounded-lg">
               <p className="font-medium">{error}</p>
               <button 
-                onClick={() => handleThemeSelect(selectedTheme)}
+                onClick={() => fetchDestinations(selectedTheme.id, selectedCountry)}
                 className="mt-3 text-white bg-red-500 hover:bg-red-600 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors"
               >
                 Try Again

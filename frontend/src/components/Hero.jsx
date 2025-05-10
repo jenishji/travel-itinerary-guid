@@ -3,14 +3,14 @@ import { motion } from 'framer-motion';
 
 const Hero = ({ onGenerateTrip, showDeleteModal, onConfirmDelete, onCancelDelete }) => {
   return (
-    <div className="relative text-white overflow-hidden">
+    <div className="relative text-white overflow-hidden pt-20">
       <div className="absolute inset-0">
         <img 
           className="w-full h-full object-cover"
           src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e" // Using placeholder image as external URLs aren't supported
           alt="Travel background" 
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-blue-700/50"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-blue-700/50 opacity-50"></div>
       </div>
       
       <div className="relative container mx-auto px-4 py-24 md:py-32 flex flex-col items-center">
@@ -26,7 +26,7 @@ const Hero = ({ onGenerateTrip, showDeleteModal, onConfirmDelete, onCancelDelete
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            Travel AI Guide
+            Start Your Journey To Your <br/> Dream Destination Here
           </motion.h1>
           
           <motion.div

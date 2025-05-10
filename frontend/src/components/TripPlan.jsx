@@ -11,6 +11,8 @@ const TripPlan = ({ tripData, onFeedbackSubmit, onClose }) => {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [activeTab, setActiveTab] = useState('itinerary');
   const [showInviteModal, setShowInviteModal] = useState(false);
+
+  // console.log(tripData);
   
   const tabs = [
     { id: 'itinerary', label: 'Itinerary' },
@@ -116,7 +118,7 @@ const TripPlan = ({ tripData, onFeedbackSubmit, onClose }) => {
           <EmailTripPlan 
             tripId={tripData._id}
             onEmailSent={() => setShowEmailForm(false)}
-            onCancel={() => setShowEmailForm(false)}
+            onClose = {() => setShowEmailForm(false)}
           />
         </div>
       )}

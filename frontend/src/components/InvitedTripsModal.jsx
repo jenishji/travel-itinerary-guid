@@ -1,7 +1,7 @@
 import React from 'react';
-import { X, User, MapPin } from 'lucide-react';
+import { X, ChevronRight, User } from 'lucide-react';
 
-const InvitedTripsModal = ({ trips, onClose, onSelectTrip }) => {
+const InvitedTripsModal = ({ trips, onClose, onSelectInviter }) => {
   // Group trips by inviter
   const tripsByInviter = trips.reduce((acc, trip) => {
     const inviterKey = trip.inviterId;
@@ -14,6 +14,8 @@ const InvitedTripsModal = ({ trips, onClose, onSelectTrip }) => {
     acc[inviterKey].trips.push(trip);
     return acc;
   }, {});
+
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
@@ -33,25 +35,21 @@ const InvitedTripsModal = ({ trips, onClose, onSelectTrip }) => {
         ) : (
           <div className="space-y-4">
             {Object.entries(tripsByInviter).map(([inviterId, inviterData]) => (
-              <div key={inviterId} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center space-x-3">
-                  <User className="text-blue-500" />
-                  <h3 className="text-lg font-semibold text-blue-700">
-                    {inviterData.inviterName}
-                  </h3>
-                </div>
-                
-                <div className="pl-8 space-y-2">
-                  {inviterData.trips.map(trip => (
-                    <div
-                      key={trip._id}
-                      className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 cursor-pointer p-2 hover:bg-blue-50 rounded"
-                      onClick={() => onSelectTrip(trip)}
-                    >
-                      <MapPin size={16} />
-                      <span>{trip.destination}</span>
+              <div
+                key={inviterId}
+                className="border rounded-lg p-4 hover:bg-blue-50 cursor-pointer"
+                onClick={() => onSelectInviter(inviterData.inviterName, inviterData.trips)}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <User className="text-blue-500" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-700">
+                        {inviterData.inviterName}
+                      </h3>
                     </div>
-                  ))}
+                  </div>
+                  <ChevronRight className="text-blue-500" />
                 </div>
               </div>
             ))}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import InviteNotifications from './InviteNotifications';
 import { 
@@ -13,8 +13,6 @@ import {
   Menu,
   X
 } from 'lucide-react';
-
-
 
 // Mobile Menu Component (Separate from NavBar)
 const MobileMenu = ({ user, onLogout, onViewTripPlan, onViewInvitedTrips, onAcceptInvite, isOpen, onClose }) => {
@@ -59,7 +57,7 @@ const MobileMenu = ({ user, onLogout, onViewTripPlan, onViewInvitedTrips, onAcce
   return (
     <AnimatePresence>
       <motion.div 
-        className="fixed inset-0 bg-black/50 z-50"
+        className="fixed inset-0 bg-black/50 z-40"
         initial="hidden"
         animate="visible"
         exit="exit"
@@ -67,7 +65,7 @@ const MobileMenu = ({ user, onLogout, onViewTripPlan, onViewInvitedTrips, onAcce
       >
         <motion.div
           ref={menuRef}
-          className="fixed top-0 right-0 h-full bg-white shadow-xl z-50 overflow-y-auto"
+          className="fixed top-0 right-0 h-full bg-white shadow-xl z-40 overflow-y-auto"
           style={{ maxWidth: "320px", width: "85%" }}
           variants={slideVariants}
           initial="hidden"
@@ -113,19 +111,6 @@ const MobileMenu = ({ user, onLogout, onViewTripPlan, onViewInvitedTrips, onAcce
                   <Share2 size={20} />
                   <span>Invited Trips</span>
                 </button>
-                
-                <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-lg">
-                  {user && (
-                    <InviteNotifications 
-                      user={user} 
-                      onInviteAccept={(tripId) => {
-                        onAcceptInvite(tripId);
-                        onClose();
-                      }} 
-                    />
-                  )}
-                  <span className="ml-2 text-blue-700">Trip Invites</span>
-                </div>
                 
                 <button
                   onClick={() => {
@@ -173,11 +158,32 @@ const MobileMenu = ({ user, onLogout, onViewTripPlan, onViewInvitedTrips, onAcce
 
 const NavBar = ({ user, onLogout, onViewTripPlan, onAcceptInvite, onViewInvitedTrips }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const desktopNotificationRef = useRef(null);
+  const mobileNotificationRef = useRef(null);
+  
+  // Determine if we're on the home page (with Hero)
+  const isHomePage = location.pathname === '/';
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close menu when window is resized to desktop width
   useEffect(() => {
@@ -191,13 +197,55 @@ const NavBar = ({ user, onLogout, onViewTripPlan, onAcceptInvite, onViewInvitedT
     return () => window.removeEventListener('resize', handleResize);
   }, [isMenuOpen]);
 
+  // Dynamic navbar styles based on home page and scroll state
+  const navbarClasses = isHomePage 
+    ? scrolled 
+      ? "fixed top-0 left-0 right-0 z-30 bg-white/90 backdrop-blur-md shadow-md border-b border-blue-100 transition-all duration-300"
+      : "fixed top-0 left-0 right-0 z-30 bg-transparent transition-all duration-300"
+    : "fixed top-0 left-0 right-0 z-30 bg-white/90 backdrop-blur-md shadow-md border-b border-blue-100";
+
+  // Logo and text styles based on home page and scroll state
+  const logoTextClasses = isHomePage && !scrolled
+    ? "text-xl sm:text-2xl font-bold text-white group-hover:text-yellow-300 transition-all"
+    : "text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent group-hover:from-blue-500 group-hover:to-blue-700 transition-all";
+
+  const logoIconClasses = isHomePage && !scrolled
+    ? "text-white group-hover:text-yellow-300 group-hover:rotate-12 transition-all duration-300"
+    : "text-blue-600 group-hover:rotate-12 transition-transform duration-300";
+
+  // User info display styles
+  const userInfoClasses = isHomePage && !scrolled
+    ? "flex items-center space-x-2 text-white bg-blue-800/40 backdrop-blur-sm px-3 py-2 rounded-full"
+    : "flex items-center space-x-2 text-blue-800 bg-blue-50 px-3 py-2 rounded-full";
+
+  // Button styles for authenticated users
+  const tripPlanButtonClasses = isHomePage && !scrolled
+    ? "flex items-center space-x-2 bg-blue-600/40 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-blue-700/50 transition-colors"
+    : "flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors";
+
+  const invitedTripsButtonClasses = isHomePage && !scrolled
+    ? "flex items-center space-x-2 bg-teal-600/40 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-teal-700/50 transition-colors"
+    : "flex items-center space-x-2 bg-teal-100 text-teal-700 px-4 py-2 rounded-full hover:bg-teal-200 transition-colors";
+
+  const logoutButtonClasses = isHomePage && !scrolled
+    ? "flex items-center space-x-2 text-white border border-white/50 px-4 py-2 rounded-full hover:bg-white/10 hover:text-red-500 hover:border-red-700 transition-colors"
+    : "flex items-center space-x-2 text-red-600 hover:text-white border border-red-300 px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-600";
+
+  // Button styles for non-authenticated users
+  const loginButtonClasses = isHomePage && !scrolled
+    ? "flex items-center space-x-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/30 transition-colors"
+    : "flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors";
+
+  // Menu icon color
+  const menuIconClasses = isHomePage && !scrolled ? "text-white" : "text-blue-600";
+
   return (
     <>
       <motion.nav 
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md shadow-md border-b border-blue-100"
+        className={navbarClasses}
       >
         <div className="mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
@@ -206,22 +254,31 @@ const NavBar = ({ user, onLogout, onViewTripPlan, onAcceptInvite, onViewInvitedT
               to="/" 
               className="flex items-center space-x-2 sm:space-x-3 group z-10"
             >
-              <Plane 
-                className="text-blue-600 group-hover:rotate-12 transition-transform duration-300" 
-                size={28} 
-              />
-              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent group-hover:from-blue-500 group-hover:to-blue-700 transition-all">
-                Travel AI Guide
-              </span>
+              <Plane className={logoIconClasses} size={28} />
+              <span className={logoTextClasses}>Traven</span>
             </Link>
 
-            {/* Mobile Menu Button */}
-            <div className="lg:hidden">
+            {/* Mobile Navigation Icons */}
+            <div className="flex items-center space-x-4 lg:hidden">
+              {/* Mobile Notification Bell */}
+              {user && (
+                <div className="z-50">
+                  <InviteNotifications 
+                    user={user} 
+                    onInviteAccept={(tripId) => {
+                      onAcceptInvite(tripId);
+                    }} 
+                    isTopLayer={true}
+                  />
+                </div>
+              )}
+
+              {/* Mobile Menu Button */}
               <button
                 onClick={toggleMenu}
                 className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <Menu size={24} className="text-blue-600" />
+                <Menu size={24} className={menuIconClasses} />
               </button>
             </div>
 
@@ -230,7 +287,7 @@ const NavBar = ({ user, onLogout, onViewTripPlan, onAcceptInvite, onViewInvitedT
               {user ? (
                 <>
                   <div className="flex items-center space-x-4 xl:space-x-6">
-                    <div className="flex items-center space-x-2 text-blue-800 bg-blue-50 px-3 py-2 rounded-full">
+                    <div className={userInfoClasses}>
                       <User size={18} />
                       <span className="font-medium">{user.name}</span>
                     </div>
@@ -239,7 +296,7 @@ const NavBar = ({ user, onLogout, onViewTripPlan, onAcceptInvite, onViewInvitedT
                       onClick={onViewTripPlan}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors"
+                      className={tripPlanButtonClasses}
                     >
                       <MapPin size={18} />
                       <span>My Trip Plan</span>
@@ -249,7 +306,7 @@ const NavBar = ({ user, onLogout, onViewTripPlan, onAcceptInvite, onViewInvitedT
                       onClick={onViewInvitedTrips}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex items-center space-x-2 bg-teal-100 text-teal-700 px-4 py-2 rounded-full hover:bg-teal-200 transition-colors"
+                      className={invitedTripsButtonClasses}
                     >
                       <Share2 size={18} />
                       <span>Invited Trips</span>
@@ -269,7 +326,7 @@ const NavBar = ({ user, onLogout, onViewTripPlan, onAcceptInvite, onViewInvitedT
                       }}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex items-center space-x-2 text-red-600 hover:text-red-700 border border-red-300 px-4 py-2 rounded-full hover:bg-red-50 transition-colors"
+                      className={logoutButtonClasses}
                     >
                       <LogOut size={18} />
                       <span>Logout</span>
@@ -283,7 +340,7 @@ const NavBar = ({ user, onLogout, onViewTripPlan, onAcceptInvite, onViewInvitedT
                       onClick={() => navigate('/login')}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full hover:bg-blue-200 transition-colors"
+                      className={loginButtonClasses}
                     >
                       <LogIn size={18} />
                       <span>Login</span>

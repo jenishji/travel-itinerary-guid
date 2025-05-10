@@ -12,23 +12,7 @@ import FeedbackList from '../components/FeedbackList';
 import Footer from '../components/Footer';
 import AirplaneTransition from '../components/AirplaneTransition';
 import InvitedTripsModal from '../components/InvitedTripsModal';
-
-
-
-// const [showMyTrips, setShowMyTrips] = useState(false);
-
-// {showMyTrips && user && (
-//   <MyTripPlans 
-//     token={localStorage.getItem('token')}
-//     onSelectTrip={(trip) => {
-//       setTripPlan(trip);
-//       setShowMyTrips(false);
-//     }}
-//     onClose={() => setShowMyTrips(false)}
-//   />
-// )}
-
-
+import InviterTripsModal from '../components/InviterTripsModal';
 
 const HomePage = () => {
   const { user, setUser } = useContext(UserContext);
@@ -42,10 +26,13 @@ const HomePage = () => {
   const [initialTripData, setInitialTripData] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [hasTripPlan, setHasTripPlan] = useState(false);
-  const [currentTripPlan, setCurrentTripPlan] = useState(null);
 
+  const [currentTripPlan, setCurrentTripPlan] = useState(null);
   const [showInvitedTripsModal, setShowInvitedTripsModal] = useState(false);
   const [invitedTrips, setInvitedTrips] = useState([]);
+  const [showInviterTripsModal, setShowInviterTripsModal] = useState(false);
+  const [selectedInviterTrips, setSelectedInviterTrips] = useState([]);
+  const [selectedInviterName, setSelectedInviterName] = useState('');
 
   // Add new function to fetch invited trips
   const fetchInvitedTrips = async () => {
@@ -68,11 +55,32 @@ const HomePage = () => {
     }
   };
 
-  const handleSelectInvitedTrip = (trip) => {
-    setCurrentTripPlan(trip);
+  const handleSelectInviter = (inviterName, trips) => {
+    setSelectedInviterName(inviterName);
+    setSelectedInviterTrips(trips);
     setShowInvitedTripsModal(false);
+    setShowInviterTripsModal(true);
   };
 
+  const handleSelectInviterTrip = async (trip) => {
+    try {
+      // Fetch full trip details
+      const response = await axios.get(`http://localhost:4000/api/v1/trips/${trip._id}`);
+      console.log(response.data.tripPlan);
+      setCurrentTripPlan(response.data.tripPlan);
+      setShowInviterTripsModal(false);
+    } catch (error) {
+      console.error('Error fetching trip details:', error);
+      toast.error('Failed to fetch trip details', {
+        style: {
+          borderRadius: '10px',
+          background: '#f7f7f8',
+          border: '1px solid #ff4136',
+          color: '#ff4136',
+        }
+      });
+    }
+  };
 
   // Memoize handleLogout to prevent recreation on each render
   const handleLogout = useCallback(() => {
@@ -405,79 +413,100 @@ const HomePage = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Toaster position="top-right" />
       
-      {showTransition && (
+      {/* Only show the AirplaneTransition if it's active AND currentTripPlan is not set */}
+      {showTransition && !currentTripPlan && (
         <AirplaneTransition onAnimationComplete={handleTransitionComplete} />
       )}
 
-      
-
-      {/* If no full-screen TripForm/TripPlan is open, show main content */}
-      {!showTripForm && !tripPlan && (
-        <>
-          {showInvitedTripsModal && (
-        <InvitedTripsModal 
-          trips={invitedTrips}
-          onClose={() => setShowInvitedTripsModal(false)}
-          onSelectTrip={handleSelectInvitedTrip}
-        />
-          )}
-          <NavBar user={user} onLogout={handleLogout} 
-          onViewTripPlan={handleViewTripPlan} 
-          onAcceptInvite={handleAcceptInvite}
-          onViewInvitedTrips={fetchInvitedTrips}
-          />
-          <Hero 
-            onGenerateTrip={handleGenerateTrip}
-            showDeleteModal={showDeleteModal}
-            onConfirmDelete={handleConfirmDelete}
-            onCancelDelete={handleCancelDelete}
-          />
-          {/* Delete Trip Modal */}
-          {showDeleteModal && (
-            <DeleteTripModal 
-              onConfirm={handleConfirmDelete}
-              onCancel={handleCancelDelete}
-            />
-          )}
-          <DestinationsByTheme onPlanTrip={handlePlanTrip} />
-          <div className="container mx-auto px-4 py-8">
-            <FeedbackList feedbacks={feedbackList} />
-          </div>
-          <Footer />
-        </>
-      )}
-
-      {/* Full-screen TripForm when generating a trip */}
-      {showTripForm && !tripPlan && (
-        <div className="container mx-auto py-10">
-          <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
-            Plan Your Perfect Adventure
-          </h2>
-          <TripForm
-            onSubmit={handleTripSubmit}
-            onCancel={() => setShowTripForm(false)}
-            isLoading={isLoading}
-            initialData={initialTripData}
-          />
-          {error && (
-            <div className="mt-6 max-w-2xl mx-auto">
-              <p className="text-red-500 text-center p-4 bg-red-50 rounded-lg border border-red-100">
-                {error}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Show generated TripPlan */}
-      {tripPlan && (
+      {/* ONLY SHOW the currentTripPlan when it exists - hide everything else */}
+      {currentTripPlan ? (
         <div className="container mx-auto px-4 py-8">
           <TripPlan 
-            tripData={tripPlan} 
+            tripData={currentTripPlan} 
             onFeedbackSubmit={handleFeedbackSubmit}
-            onClose={() => setTripPlan(null)}
+            onClose={() => setCurrentTripPlan(null)}
           />
         </div>
+      ) : (
+        <>
+          {/* Invited Trips Modal - only shown when currentTripPlan is null */}
+          {showInvitedTripsModal && (
+            <InvitedTripsModal 
+              trips={invitedTrips}
+              onClose={() => setShowInvitedTripsModal(false)}
+              onSelectInviter={handleSelectInviter}
+            />
+          )}
+
+          {/* Inviter's Trips Modal - only shown when currentTripPlan is null */}
+          {showInviterTripsModal && (
+            <InviterTripsModal 
+              inviterName={selectedInviterName}
+              trips={selectedInviterTrips}
+              onClose={() => setShowInviterTripsModal(false)}
+              onSelectTrip={handleSelectInviterTrip}
+            />
+          )}
+
+          {/* If no full-screen TripForm/TripPlan is open, show main content */}
+          {!showTripForm && !tripPlan && (
+            <>
+              <NavBar user={user} onLogout={handleLogout} 
+              onViewTripPlan={handleViewTripPlan} 
+              onAcceptInvite={handleAcceptInvite}
+              onViewInvitedTrips={fetchInvitedTrips}
+              />
+              <Hero 
+                onGenerateTrip={handleGenerateTrip}
+                showDeleteModal={showDeleteModal}
+                onConfirmDelete={handleConfirmDelete}
+                onCancelDelete={handleCancelDelete}
+              />
+              {/* Delete Trip Modal */}
+              {showDeleteModal && (
+                <DeleteTripModal 
+                  onConfirm={handleConfirmDelete}
+                  onCancel={handleCancelDelete}
+                />
+              )}
+              <DestinationsByTheme onPlanTrip={handlePlanTrip} />
+              <div className="container mx-auto px-4 py-8">
+                <FeedbackList feedbacks={feedbackList} />
+              </div>
+              <Footer />
+            </>
+          )}
+
+          {/* Full-screen TripForm when generating a trip */}
+          {showTripForm && !tripPlan && (
+            <div className="container mx-auto py-10">
+              <TripForm
+                onSubmit={handleTripSubmit}
+                onCancel={() => setShowTripForm(false)}
+                isLoading={isLoading}
+                initialData={initialTripData}
+              />
+              {error && (
+                <div className="mt-6 max-w-2xl mx-auto">
+                  <p className="text-red-500 text-center p-4 bg-red-50 rounded-lg border border-red-100">
+                    {error}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Show generated TripPlan */}
+          {tripPlan && (
+            <div className="container mx-auto px-4 py-8">
+              <TripPlan 
+                tripData={tripPlan} 
+                onFeedbackSubmit={handleFeedbackSubmit}
+                onClose={() => setTripPlan(null)}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
